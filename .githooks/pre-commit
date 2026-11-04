@@ -1,0 +1,35 @@
+#!/bin/sh
+# Contrôle de pré-commit : refuse un commit qui semble contenir un secret.
+# Défense rapide, pas une garantie. Relire `git diff --cached` avant de pousser.
+
+BAD_NAMES='(^|/)\.env([.^/]*|)$|(^|/)data/|(^|/)secrets/|(^|/)tmp/|(^|/)node_modules/|\.pem$|\.key$|\.p12$|\.pfx$|_service_account.*\.json$|\.capx$|(^|/)\.qoder/'
+
+BAD_PATTERNS='sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|BEGIN [A-Z ]*PRIVATE KEY|(api[_-]?key|apikey|secret|passwd|password|access_token|auth_token)[^A-Za-z0-9_]{0,5}[=:][[:space:]]*["'\''`]?[[:space:]]*[A-Za-z0-9+$&!@#%^*_=.-]{12,}'
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$staged" ] && exit 0
+
+hits_name=$(printf '%s\n' "$staged" | grep -Ei "$BAD_NAMES" || true)
+if [ -n "$hits_name" ]; then
+  echo "PRÉ-COMMIT : nom de fichier confidentiel interdit :" >&2
+  printf '  %s\n' $hits_name >&2
+  echo "  (ajoute-le à .gitignore à la place)" >&2
+  exit 1
+fi
+
+hits_content=$(
+  printf '%s\n' "$staged" | while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    if git show ":$f" 2>/dev/null | grep -Eiq "$BAD_PATTERNS"; then
+      grep -Ein "$BAD_PATTERNS" "$f" 2>/dev/null | head -1 | sed "s|^|  $f:|"
+    fi
+  done
+)
+if [ -n "$hits_content" ]; then
+  echo "PRÉ-COMMIT : motif de secret détecté :" >&2
+  printf '%s\n' "$hits_content" >&2
+  echo "  Contournement assumé : git commit --no-verify" >&2
+  exit 1
+fi
+
+exit 0

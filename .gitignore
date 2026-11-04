@@ -1,0 +1,56 @@
+# Secrets et configuration locale — jamais commités
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials.json
+*_service_account*.json
+
+# Brouillon local et données
+data/
+out/
+tmp/
+*.log
+*.sqlite
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+.npm/
+.pnpm-store/
+.next/
+.out/
+coverage/
+
+# Binaires vidéo et audio (trop lourds pour GitHub)
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.aep
+*.capx
+
+# Qoder / éditeurs / OS
+.qoder/
+*.qoder.site
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
